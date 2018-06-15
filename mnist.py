@@ -3,7 +3,7 @@ import numpy as np
 
 def softmax(x):
     exps = ad.exp_op(x)
-    return ad.mul_op(exps, ad.reciprocal_op(ad.sum_op(exps)))
+    return ad.mul_byscalar_op(ad.reciprocal_op(ad.sum_op(exps)), exps)
 
 if __name__ ==  "__main__":
     x = ad.Variable("x")

@@ -297,7 +297,7 @@ class ReciprocalOp(Op):
         return np.reciprocal(input_vals[0])
 
     def gradient(self, node, output_grad):
-        return [sum_op(mul_op(neg_op(reciprocal_op(mul_op(node.inputs[0], node.inputs[0]))), output_grad))]
+        return [mul_op(neg_op(reciprocal_op(mul_op(node.inputs[0], node.inputs[0]))), output_grad)]
 
 class SumOp(Op):
     def __call__(self, node_A):
@@ -314,6 +314,22 @@ class SumOp(Op):
     def gradient(self, node, output_grad):
         return [mul_op(output_grad, oneslike_op(node.inputs[0]))]
 
+class MulByScalarOp(Op):
+    def __call__(self, scalar, v):
+        new_node = Op.__call__(self)
+        new_node.inputs = [scalar, v]
+        new_node.name = "smul(%s, %s)" % (scalar.name, v.name)
+        return new_node
+
+    def compute(self, node, input_vals):
+        assert(len(input_vals) == 2)
+        return np.multiply(input_vals[0], input_vals[1])
+
+    def gradient(self, node, output_grad):
+        return [sum_op(mul_op(node.inputs[1], output_grad)), mul_byscalar_op(node.inputs[0], output_grad)]
+
+
+
 
 # Create global singletons of operators.
 add_op = AddOp()
@@ -328,6 +344,7 @@ exp_op = ExpOp()
 neg_op = NegativeOp()
 reciprocal_op = ReciprocalOp()
 sum_op = SumOp()
+mul_byscalar_op = MulByScalarOp()
 
 class Executor:
     """Executor computes values for a given subset of nodes in a computation graph.""" 
