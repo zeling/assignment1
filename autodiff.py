@@ -248,11 +248,72 @@ class OnesLikeOp(Op):
 
     def compute(self, node, input_vals):
         """Returns ones_like of the same shape as input."""
-        assert(isinstance(input_vals[0], np.ndarray))
-        return np.ones(input_vals[0].shape)
+        if isinstance(input_vals[0], np.ndarray):
+            return np.ones(input_vals[0].shape)
+        else:
+            # scalar
+            return np.ones((1))
 
     def gradient(self, node, output_grad):
         return [zeroslike_op(node.inputs[0])]
+
+class ExpOp(Op):
+    def __call__(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "exp(%s)" % node_A.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        assert(len(input_vals) == 1)
+        return np.exp(input_vals[0])
+
+    def gradient(self, node, output_grad):
+        return [mul_op(output_grad, node)]
+
+class NegativeOp(Op):
+    def __call__(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "-%s" % node_A.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        assert(len(input_vals) == 1)
+        return np.negative(input_vals[0])
+
+    def gradient(self, node, output_grad):
+        return [neg_op(output_grad)]
+
+class ReciprocalOp(Op):
+    def __call__(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "1/%s" % node_A.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        assert(len(input_vals) == 1)
+        return np.reciprocal(input_vals[0])
+
+    def gradient(self, node, output_grad):
+        return [sum_op(mul_op(neg_op(reciprocal_op(mul_op(node.inputs[0], node.inputs[0]))), output_grad))]
+
+class SumOp(Op):
+    def __call__(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "sum(%s)" % node_A.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        assert(len(input_vals) == 1)
+        assert(isinstance(input_vals[0], np.ndarray))
+        return np.sum(input_vals[0])
+
+    def gradient(self, node, output_grad):
+        return [mul_op(output_grad, oneslike_op(node.inputs[0]))]
+
 
 # Create global singletons of operators.
 add_op = AddOp()
@@ -263,6 +324,10 @@ matmul_op = MatMulOp()
 placeholder_op = PlaceholderOp()
 oneslike_op = OnesLikeOp()
 zeroslike_op = ZerosLikeOp()
+exp_op = ExpOp()
+neg_op = NegativeOp()
+reciprocal_op = ReciprocalOp()
+sum_op = SumOp()
 
 class Executor:
     """Executor computes values for a given subset of nodes in a computation graph.""" 
