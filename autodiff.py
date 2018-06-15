@@ -328,6 +328,74 @@ class MulByScalarOp(Op):
     def gradient(self, node, output_grad):
         return [sum_op(mul_op(node.inputs[1], output_grad)), mul_byscalar_op(node.inputs[0], output_grad)]
 
+class AddByScalarOp(Op):
+    def __call__(self, scalar, v):
+        new_node = Op.__call__(self)
+        new_node.inputs = [scalar, v]
+        new_node.name = "sadd(%s, %s)" % (scalar.name, v.name)
+        return new_node
+
+    def compute(self, node, input_vals):
+        assert(len(input_vals) == 2)
+        return np.add(input_vals[0], input_vals[1])
+
+    def gradient(self, node, output_grad):
+        return [sum_op(output_grad), output_grad]
+
+class LogOp(Op):
+    def __call(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "log(%s)" % new_node.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        return np.log(input_vals[0])
+
+    def gradient(self, node, output_grad):
+        return [mul_op(neg_op(reciprocal_op(node.inputs[0])), output_grad)]
+
+
+class MaxOp(Op):
+    def __call__(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "max(%s)" % node_A.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        return np.max(input_vals[0])
+
+    def gradient(self, node, output_grad):
+        return [maxhot_op(node.inputs[0], output_grad)]
+
+class MaxHotOp(Op):
+    def __call__(self, node_A, node_B):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A, node_B]
+        new_node.name = "moh(%s, %s)" % (node_A.name, node_B.name)
+        return new_node
+
+    def compute(self, node, input_vals):
+        ret = np.zeros_like(input_vals[0])
+        np.put(ret, np.argmax(input_vals[0]), input_vals[1])
+        return ret
+
+    def gradient(self, node, output_grad):
+        return [zeroslike_op(output_grad)]
+
+class SoftmaxCrossEntropyOp(Op):
+    def __call__(self, node_A):
+        new_node = Op.__call__(self)
+        new_node.inputs = [node_A]
+        new_node.name = "sce(%s)" % node_A.name
+        return new_node
+
+    def compute(self, node, input_vals):
+        pass
+
+    def gradient(self, node, output_grad):
+        pass
 
 
 
@@ -345,6 +413,10 @@ neg_op = NegativeOp()
 reciprocal_op = ReciprocalOp()
 sum_op = SumOp()
 mul_byscalar_op = MulByScalarOp()
+log_op = LogOp()
+max_op = MaxOp()
+maxhot_op = MaxHotOp()
+add_byscalar_op = AddByScalarOp()
 
 class Executor:
     """Executor computes values for a given subset of nodes in a computation graph.""" 
