@@ -343,7 +343,7 @@ class AddByScalarOp(Op):
         return [sum_op(output_grad), output_grad]
 
 class LogOp(Op):
-    def __call(self, node_A):
+    def __call__(self, node_A):
         new_node = Op.__call__(self)
         new_node.inputs = [node_A]
         new_node.name = "log(%s)" % new_node.name
@@ -353,7 +353,7 @@ class LogOp(Op):
         return np.log(input_vals[0])
 
     def gradient(self, node, output_grad):
-        return [mul_op(neg_op(reciprocal_op(node.inputs[0])), output_grad)]
+        return [mul_op(reciprocal_op(node.inputs[0]), output_grad)]
 
 
 class MaxOp(Op):
@@ -383,19 +383,6 @@ class MaxHotOp(Op):
 
     def gradient(self, node, output_grad):
         return [zeroslike_op(output_grad)]
-
-class SoftmaxCrossEntropyOp(Op):
-    def __call__(self, node_A):
-        new_node = Op.__call__(self)
-        new_node.inputs = [node_A]
-        new_node.name = "sce(%s)" % node_A.name
-        return new_node
-
-    def compute(self, node, input_vals):
-        pass
-
-    def gradient(self, node, output_grad):
-        pass
 
 
 
